@@ -22,4 +22,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: heiso/video-checker:latest
+          tags: heiso/videos-checker:latest

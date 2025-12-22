@@ -1,24 +1,40 @@
-# Video Checker Docker Image
-# Lightweight Alpine-based image with ffmpeg and ffprobe
+# Build stage
+FROM node:22-alpine AS builder
 
-FROM alpine:3.19
+WORKDIR /app
 
-# Install ffmpeg (includes ffprobe) and bash
-RUN apk add --no-cache \
-  ffmpeg \
-  bash
+# Install dependencies
+COPY package*.json ./
+RUN npm install
 
-# Create a directory for videos to be mounted
-RUN mkdir -p /videos
+# Copy source code
+COPY . .
 
-# Copy the check script
-COPY check_videos.sh /usr/local/bin/check_videos.sh
+# Build the application
+RUN npm run build
 
-# Make sure it's executable
-RUN chmod +x /usr/local/bin/check_videos.sh
+# Production stage
+FROM node:22-alpine
 
-# Set working directory
-WORKDIR /videos
+# Install ffmpeg (includes ffprobe)
+RUN apk add --no-cache ffmpeg
 
-ENTRYPOINT [ "/usr/local/bin/check_videos.sh" ]
-CMD [ "--help" ]
+WORKDIR /app
+
+# Copy built files and production dependencies
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/package*.json ./
+RUN npm install --omit=dev
+
+# Create directories for data and videos
+RUN mkdir -p /data /videos
+
+# Environment variables
+ENV NODE_ENV=production
+ENV DATA_DIR=/data
+
+# Expose port
+EXPOSE 3000
+
+# Start the server
+CMD ["npm", "start"]
