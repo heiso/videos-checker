@@ -1,8 +1,0 @@
-node_modules/
-build/
-.react-router/
-*.db
-logs/
-.env
-.env.local
-.DS_Store
